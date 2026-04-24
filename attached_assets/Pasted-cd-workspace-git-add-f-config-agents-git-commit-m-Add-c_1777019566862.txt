@@ -1,0 +1,24 @@
+cd ~/workspace && git add -f .config .agents && git commit -m "Add .config and .agents" && git push gh master:main
+[main d04139a] Add .config and .agents
+ 14 files changed, 1 insertion(+)
+ create mode 100644 .config/go/telemetry/local/asm@go1.24.4-go1.24.4-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/asm@go1.25.0-go1.25.0-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/cgo@go1.24.4-go1.24.4-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/cgo@go1.25.0-go1.25.0-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/compile@go1.24.4-go1.24.4-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/compile@go1.25.0-go1.25.0-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/go@go1.24.4-go1.24.4-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/go@go1.25.0-go1.25.0-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/go@go1.25.9-go1.25.9-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/gopls@devel-go1.21.13-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/link@go1.24.4-go1.24.4-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/link@go1.25.0-go1.25.0-linux-amd64-2026-04-24.v1.count
+ create mode 100644 .config/go/telemetry/local/upload.token
+ create mode 100644 .config/go/telemetry/local/weekends
+To https://github.com/hitlabmodv2/Reactionsw2026_Go_V1.git
+ ! [rejected]        master -> main (non-fast-forward)
+error: failed to push some refs to 'https://github.com/hitlabmodv2/Reactionsw2026_Go_V1.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. If you want to integrate the remote changes,
+hint: use 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
