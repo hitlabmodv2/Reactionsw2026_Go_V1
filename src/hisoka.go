@@ -7,6 +7,7 @@ import (
         "os"
         "os/signal"
         "regexp"
+        "strings"
         "syscall"
         "time"
 
@@ -55,40 +56,33 @@ func StartClient() {
 
                 if pairingNumber != "" {
                         pairingNumber = regexp.MustCompile(`\D+`).ReplaceAllString(pairingNumber, "")
+                        handler.PairingNumber = pairingNumber
 
                         if err := conn.Connect(); err != nil {
                                 panic(err)
                         }
 
-                        pairCtx := context.Background()
-                        code, err := conn.PairPhone(pairCtx, pairingNumber, true, whatsmeow.PairClientChrome, "Edge (Linux)")
-                        if err != nil {
+                        var code string
+                        for attempt := 1; ; attempt++ {
+                                var err error
+                                code, err = conn.PairPhone(context.Background(), pairingNumber, true, whatsmeow.PairClientChrome, "Edge (Linux)")
+                                if err == nil {
+                                        break
+                                }
+                                if strings.Contains(err.Error(), "rate-overlimit") || strings.Contains(err.Error(), "429") {
+                                        wait := time.Duration(15*attempt) * time.Second
+                                        if wait > 60*time.Second {
+                                                wait = 60 * time.Second
+                                        }
+                                        helpers.SocketDown("WhatsApp rate-limit, tunggu " + wait.String() + " lalu coba lagi…")
+                                        time.Sleep(wait)
+                                        continue
+                                }
                                 panic(err)
                         }
 
+                        handler.MarkPairIssued()
                         helpers.PairingPanel(pairingNumber, code)
-
-                        // Auto-refresh pairing code while user has not entered it yet.
-                        go func() {
-                                for {
-                                        time.Sleep(65 * time.Second)
-                                        if conn.Store.ID != nil {
-                                                return
-                                        }
-                                        for !conn.IsConnected() && conn.Store.ID == nil {
-                                                time.Sleep(2 * time.Second)
-                                        }
-                                        if conn.Store.ID != nil {
-                                                return
-                                        }
-                                        newCode, err := conn.PairPhone(pairCtx, pairingNumber, true, whatsmeow.PairClientChrome, "Edge (Linux)")
-                                        if err != nil {
-                                                helpers.SocketDown("Gagal minta pairing code baru: " + err.Error())
-                                                continue
-                                        }
-                                        helpers.PairingRefresh(newCode)
-                                }
-                        }()
                 } else {
                         qrChan, _ := conn.GetQRChannel(context.Background())
                         if err := conn.Connect(); err != nil {

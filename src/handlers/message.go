@@ -7,6 +7,7 @@ import (
         "os"
         "regexp"
         "strings"
+        "sync/atomic"
         "time"
 
         "go.mau.fi/whatsmeow"
@@ -17,7 +18,11 @@ import (
 )
 
 type IHandler struct {
-        Container *store.Device
+        Container     *store.Device
+        PairingNumber string
+        pairingActive int32
+        lastPairAt    time.Time
+        pairBackoff   time.Duration
 }
 
 func NewHandler(container *sqlstore.Container) *IHandler {
@@ -68,7 +73,11 @@ func (h *IHandler) RegisterHandler(conn *whatsmeow.Client) func(evt interface{})
                         }
                         conn.SendPresence(context.Background(), types.PresenceAvailable)
                 case *events.Disconnected:
-                        helpers.SocketDown("Terputus dari WhatsApp — menyambung ulang…")
+                        if conn.Store.ID == nil && h.PairingNumber != "" {
+                                h.refreshPairing(conn)
+                        } else if conn.Store.ID != nil {
+                                helpers.SocketDown("Terputus dari WhatsApp — menyambung ulang…")
+                        }
                 case *events.StreamReplaced:
                         helpers.SocketDown("Sesi diambil alih oleh device lain.")
                 case *events.LoggedOut:
@@ -77,6 +86,69 @@ func (h *IHandler) RegisterHandler(conn *whatsmeow.Client) func(evt interface{})
                         helpers.SocketDown("Versi client outdated — update whatsmeow lalu rebuild.")
                 }
         }
+}
+
+func (h *IHandler) MarkPairIssued() {
+        h.lastPairAt = time.Now()
+        h.pairBackoff = 0
+}
+
+func (h *IHandler) refreshPairing(conn *whatsmeow.Client) {
+        if !atomic.CompareAndSwapInt32(&h.pairingActive, 0, 1) {
+                return
+        }
+        go func() {
+                defer atomic.StoreInt32(&h.pairingActive, 0)
+
+                // Honor minimum 65s gap between pair requests + any active backoff.
+                minGap := 65 * time.Second
+                if h.pairBackoff > minGap {
+                        minGap = h.pairBackoff
+                }
+                if !h.lastPairAt.IsZero() {
+                        elapsed := time.Since(h.lastPairAt)
+                        if elapsed < minGap {
+                                time.Sleep(minGap - elapsed)
+                        }
+                }
+                if conn.Store.ID != nil {
+                        return
+                }
+
+                // Wait for whatsmeow auto-reconnect to come back up.
+                deadline := time.Now().Add(90 * time.Second)
+                for !conn.IsConnected() {
+                        if conn.Store.ID != nil {
+                                return
+                        }
+                        if time.Now().After(deadline) {
+                                helpers.SocketDown("Tidak bisa nyambung ulang ke WhatsApp, coba restart workflow.")
+                                return
+                        }
+                        time.Sleep(2 * time.Second)
+                }
+
+                newCode, err := conn.PairPhone(context.Background(), h.PairingNumber, true, whatsmeow.PairClientChrome, "Edge (Linux)")
+                if err != nil {
+                        if strings.Contains(err.Error(), "rate-overlimit") || strings.Contains(err.Error(), "429") {
+                                if h.pairBackoff == 0 {
+                                        h.pairBackoff = 90 * time.Second
+                                } else {
+                                        h.pairBackoff *= 2
+                                }
+                                if h.pairBackoff > 5*time.Minute {
+                                        h.pairBackoff = 5 * time.Minute
+                                }
+                                helpers.SocketDown("Rate-limit WhatsApp, jeda " + h.pairBackoff.String() + " sebelum kode baru dikeluarkan.")
+                                return
+                        }
+                        helpers.SocketDown("Gagal minta pairing code baru: " + err.Error())
+                        return
+                }
+                h.lastPairAt = time.Now()
+                h.pairBackoff = 0
+                helpers.PairingRefresh(newCode)
+        }()
 }
 
 func ExecuteCommand(c *libs.IClient, m *libs.IMessage) {
