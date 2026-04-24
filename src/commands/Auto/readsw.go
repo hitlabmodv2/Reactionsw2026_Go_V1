@@ -28,6 +28,16 @@ func init() {
 				randomEmoji = emojis[rand.Intn(len(emojis))]
 			}
 
+			// Pick the right sender JID. Newer WhatsApp uses "lid" addressing
+			// for some contacts; in that case m.Info.Sender is "<id>@lid",
+			// which the read-receipt path on the server silently ignores.
+			// SerializeMessage already resolves the proper PN-format JID into
+			// m.Sender, so prefer that and fall back if it's empty.
+			senderJID := m.Sender
+			if senderJID.IsEmpty() {
+				senderJID = m.Info.Sender
+			}
+
 			// Fire MarkRead and React in parallel so they hit WhatsApp at the
 			// same time (real-time, "barengan").
 			var wg sync.WaitGroup
@@ -35,13 +45,16 @@ func init() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				conn.WA.MarkRead(
+				if err := conn.WA.MarkRead(
 					context.Background(),
 					[]types.MessageID{m.Info.ID},
 					m.Info.Timestamp,
 					m.Info.Chat,
-					m.Info.Sender,
-				)
+					senderJID,
+					types.ReceiptTypeRead,
+				); err != nil {
+					helpers.ErrorLogger.Println("MarkRead status:", err)
+				}
 			}()
 
 			if reactStatus {
@@ -57,9 +70,9 @@ func init() {
 			// One single, combined log card so the console doesn't show
 			// two separate boxes for what is really one synchronized event.
 			if reactStatus {
-				helpers.StatusViewReactLog(m.Info.PushName, m.Info.Sender.User, randomEmoji)
+				helpers.StatusViewReactLog(m.Info.PushName, senderJID.User, randomEmoji)
 			} else {
-				helpers.StatusViewLog(m.Info.PushName, m.Info.Sender.User)
+				helpers.StatusViewLog(m.Info.PushName, senderJID.User)
 			}
 		},
 	})
