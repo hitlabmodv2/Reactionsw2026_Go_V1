@@ -1,0 +1,70 @@
+package helpers
+
+import (
+	"fmt"
+	"strings"
+
+	waLog "go.mau.fi/whatsmeow/util/log"
+)
+
+type prettyLog struct {
+	module string
+}
+
+func PrettyWALogger(module string) waLog.Logger {
+	return &prettyLog{module: module}
+}
+
+func (l *prettyLog) Sub(module string) waLog.Logger {
+	if l.module != "" {
+		module = l.module + "/" + module
+	}
+	return &prettyLog{module: module}
+}
+
+func (l *prettyLog) Debugf(msg string, args ...interface{}) {}
+
+func (l *prettyLog) Infof(msg string, args ...interface{}) {
+	l.print(cBlue, "i", msg, args...)
+}
+
+func (l *prettyLog) Warnf(msg string, args ...interface{}) {
+	l.print(cYellow, "!", msg, args...)
+}
+
+func (l *prettyLog) Errorf(msg string, args ...interface{}) {
+	text := fmt.Sprintf(msg, args...)
+	if isNoisy(text) {
+		// Demote known harmless disconnect noise to a quiet line.
+		fmt.Println("  " + cDim + "· socket closed — menyambung ulang…" + cReset)
+		return
+	}
+	l.print(cRed, "✗", msg, args...)
+}
+
+func (l *prettyLog) print(color, sigil, msg string, args ...interface{}) {
+	mod := l.module
+	if mod == "" {
+		mod = "wa"
+	}
+	fmt.Printf("  %s%s%s %s%s%s %s\n",
+		color, sigil, cReset,
+		cDim, mod, cReset,
+		fmt.Sprintf(msg, args...),
+	)
+}
+
+func isNoisy(text string) bool {
+	patterns := []string{
+		"failed to read frame header: EOF",
+		"failed to get reader: failed to read frame header",
+		"websocket: close 1006",
+		"unexpected EOF",
+	}
+	for _, p := range patterns {
+		if strings.Contains(text, p) {
+			return true
+		}
+	}
+	return false
+}
