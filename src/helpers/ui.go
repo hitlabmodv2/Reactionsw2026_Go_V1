@@ -104,6 +104,13 @@ func StatusReactLog(name, sender, emoji string) {
         statusBox("💖", "REACT STORY", cYellow, name, sender, emoji)
 }
 
+// StatusViewReactLog prints a single combined box for when the bot both
+// auto-views (reads) and auto-reacts to a status at the same time, so the
+// console isn't cluttered with two separate cards for the same event.
+func StatusViewReactLog(name, sender, emoji string) {
+        statusBox("👁💖", "LIHAT + REACT STORY", cMagenta, name, sender, emoji)
+}
+
 // statusBox renders a 2-line rounded box that fits 44-col mobile consoles.
 // Layout (uiWidth=44):
 //

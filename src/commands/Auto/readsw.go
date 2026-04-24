@@ -15,35 +15,51 @@ import (
 func init() {
 	libs.NewCommands(&libs.ICommand{
 		Before: func(conn *libs.IClient, m *libs.IMessage) {
-			if m.Info.Chat.String() == "status@broadcast" {
-				reactStatus := os.Getenv("REACT_STATUS") == "true"
+			if m.Info.Chat.String() != "status@broadcast" {
+				return
+			}
 
-				var randomEmoji string
-				if reactStatus {
-					emojis := []string{"😀", "😃", "😄", "😁", "😆", "🥹", "😅", "😂", "🤣", "🥲", "☺️", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😝", "🤪", "🤨", "🧐", "🤓", "😎", "🥸", "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😶‍🌫️", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🫣", "🤭", "🫢", "🫡", "🤫", "🫠", "🤥", "😶", "🫥", "😐", "🫤", "😑", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😮‍💨", "😵", "😵‍💫", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤡", "💩", "👻", "💀", "☠️", "🙌", "👏", "👍", "👎", "👊", "✊", "🤛", "🤞", "✌️", "🫰", "🤟", "🤘", "👌", "🤏", "☝️", "✋", "🤚", "🖖", "👋", "🤙", "🫲", "🫱", "💪", "🖕", "✍️", "🙏", "🫵", "🦶", "👣", "👀", "🧠"}
-					rand.Seed(time.Now().UnixNano())
-					randomEmoji = emojis[rand.Intn(len(emojis))]
-				}
+			reactStatus := os.Getenv("REACT_STATUS") == "true"
 
-				var wg sync.WaitGroup
+			var randomEmoji string
+			if reactStatus {
+				emojis := []string{"😀", "😃", "😄", "😁", "😆", "🥹", "😅", "😂", "🤣", "🥲", "☺️", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😝", "🤪", "🤨", "🧐", "🤓", "😎", "🥸", "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😶‍🌫️", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🫣", "🤭", "🫢", "🫡", "🤫", "🫠", "🤥", "😶", "🫥", "😐", "🫤", "😑", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😮‍💨", "😵", "😵‍💫", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤡", "💩", "👻", "💀", "☠️", "🙌", "👏", "👍", "👎", "👊", "✊", "🤛", "🤞", "✌️", "🫰", "🤟", "🤘", "👌", "🤏", "☝️", "✋", "🤚", "🖖", "👋", "🤙", "🫲", "🫱", "💪", "🖕", "✍️", "🙏", "🫵", "🦶", "👣", "👀", "🧠"}
+				rand.Seed(time.Now().UnixNano())
+				randomEmoji = emojis[rand.Intn(len(emojis))]
+			}
 
+			// Fire MarkRead and React in parallel so they hit WhatsApp at the
+			// same time (real-time, "barengan").
+			var wg sync.WaitGroup
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				conn.WA.MarkRead(
+					context.Background(),
+					[]types.MessageID{m.Info.ID},
+					m.Info.Timestamp,
+					m.Info.Chat,
+					m.Info.Sender,
+				)
+			}()
+
+			if reactStatus {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					conn.WA.MarkRead(context.Background(), []types.MessageID{m.Info.ID}, m.Info.Timestamp, m.Info.Chat, m.Info.Sender)
-					helpers.StatusViewLog(m.Info.PushName, m.Info.Sender.User)
+					m.React(randomEmoji)
 				}()
+			}
 
-				if reactStatus {
-					wg.Add(1)
-					go func() {
-						defer wg.Done()
-						m.React(randomEmoji)
-						helpers.StatusReactLog(m.Info.PushName, m.Info.Sender.User, randomEmoji)
-					}()
-				}
+			wg.Wait()
 
-				wg.Wait()
+			// One single, combined log card so the console doesn't show
+			// two separate boxes for what is really one synchronized event.
+			if reactStatus {
+				helpers.StatusViewReactLog(m.Info.PushName, m.Info.Sender.User, randomEmoji)
+			} else {
+				helpers.StatusViewLog(m.Info.PushName, m.Info.Sender.User)
 			}
 		},
 	})
