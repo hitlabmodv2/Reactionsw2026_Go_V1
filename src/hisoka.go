@@ -8,6 +8,7 @@ import (
         "os/signal"
         "regexp"
         "syscall"
+        "time"
 
         _ "hisoka/src/commands"
 
@@ -59,13 +60,35 @@ func StartClient() {
                                 panic(err)
                         }
 
-                        ctx := context.Background()
-                        code, err := conn.PairPhone(ctx, pairingNumber, true, whatsmeow.PairClientChrome, "Edge (Linux)")
+                        pairCtx := context.Background()
+                        code, err := conn.PairPhone(pairCtx, pairingNumber, true, whatsmeow.PairClientChrome, "Edge (Linux)")
                         if err != nil {
                                 panic(err)
                         }
 
                         helpers.PairingPanel(pairingNumber, code)
+
+                        // Auto-refresh pairing code while user has not entered it yet.
+                        go func() {
+                                for {
+                                        time.Sleep(65 * time.Second)
+                                        if conn.Store.ID != nil {
+                                                return
+                                        }
+                                        for !conn.IsConnected() && conn.Store.ID == nil {
+                                                time.Sleep(2 * time.Second)
+                                        }
+                                        if conn.Store.ID != nil {
+                                                return
+                                        }
+                                        newCode, err := conn.PairPhone(pairCtx, pairingNumber, true, whatsmeow.PairClientChrome, "Edge (Linux)")
+                                        if err != nil {
+                                                helpers.SocketDown("Gagal minta pairing code baru: " + err.Error())
+                                                continue
+                                        }
+                                        helpers.PairingRefresh(newCode)
+                                }
+                        }()
                 } else {
                         qrChan, _ := conn.GetQRChannel(context.Background())
                         if err := conn.Connect(); err != nil {

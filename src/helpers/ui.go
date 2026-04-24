@@ -66,6 +66,15 @@ func SocketDown(msg string) {
         fmt.Println("  " + cYellow + "⚠ " + cReset + msg)
 }
 
+func PairingRefresh(code string) {
+        fmt.Println()
+        fmt.Println("  " + cMagenta + "↻ " + cBold + "Kode pairing baru" + cReset + cDim + " (yang lama kadaluarsa)" + cReset)
+        fmt.Println("  🔑  " + cBold + "Kode    " + cReset + cDim + ": " + cReset + cBold + cYellow + code + cReset)
+        fmt.Println("  ⏱  " + cBold + "Berlaku " + cReset + cDim + ": " + cReset + "± 60 detik")
+        fmt.Println("  " + cDim + "Ketik kode di HP: ⋮ → Perangkat tertaut → Tautkan dgn nomor telepon" + cReset)
+        fmt.Println()
+}
+
 func Step(msg string) {
         fmt.Println("  " + cCyan + "›" + cReset + " " + msg)
 }
