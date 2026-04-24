@@ -91,6 +91,19 @@ func MessageLog(name, sender, command, body, msgType string) {
         field("Msg", body)
 }
 
+// StatusViewLog prints a single-line notification when the bot views
+// (auto-reads) someone's WhatsApp status / story.
+func StatusViewLog(name, sender string) {
+        if name == "" {
+                name = "(tanpa nama)"
+        }
+        fmt.Printf("  %s👁  Lihat story%s %s%s%s %s(%s)%s\n",
+                cMagenta, cReset,
+                cBlue, name, cReset,
+                cDim, sender, cReset,
+        )
+}
+
 func field(label, value string) {
         fmt.Printf("  "+cCyan+"%-4s"+cReset+cDim+" : "+cReset+"%s\n", label, value)
 }

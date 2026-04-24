@@ -18,12 +18,11 @@ import (
 )
 
 type IHandler struct {
-        Container         *store.Device
-        PairingNumber     string
-        CustomPairingCode string
-        pairingActive     int32
-        lastPairAt        time.Time
-        pairBackoff       time.Duration
+        Container     *store.Device
+        PairingNumber string
+        pairingActive int32
+        lastPairAt    time.Time
+        pairBackoff   time.Duration
 }
 
 func NewHandler(container *sqlstore.Container) *IHandler {
@@ -56,13 +55,10 @@ func (h *IHandler) RegisterHandler(conn *whatsmeow.Client) func(evt interface{})
                                 return
                         }
 
-                        // log
-                        if m.Body != "" {
-                                cmd := ""
-                                if libs.HasCommand(m.Command) {
-                                        cmd = m.Command
-                                }
-                                helpers.MessageLog(v.Info.PushName, m.Info.Sender.User, cmd, m.Body, string(m.Info.Type))
+                        // log only when the message triggers a bot command, not every
+                        // random message from groups/channels.
+                        if m.Body != "" && libs.HasCommand(m.Command) {
+                                helpers.MessageLog(v.Info.PushName, m.Info.Sender.User, m.Command, m.Body, string(m.Info.Type))
                         }
 
                         // Get command
@@ -129,9 +125,6 @@ func (h *IHandler) refreshPairing(conn *whatsmeow.Client) {
                         time.Sleep(2 * time.Second)
                 }
 
-                if h.CustomPairingCode != "" {
-                        whatsmeow.CustomLinkingCode = h.CustomPairingCode
-                }
                 newCode, err := conn.PairPhone(context.Background(), h.PairingNumber, true, whatsmeow.PairClientChrome, "Edge (Linux)")
                 if err != nil {
                         if strings.Contains(err.Error(), "rate-overlimit") || strings.Contains(err.Error(), "429") {

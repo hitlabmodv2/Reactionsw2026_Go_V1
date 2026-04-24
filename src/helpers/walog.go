@@ -25,6 +25,10 @@ func (l *prettyLog) Sub(module string) waLog.Logger {
 func (l *prettyLog) Debugf(msg string, args ...interface{}) {}
 
 func (l *prettyLog) Infof(msg string, args ...interface{}) {
+        text := fmt.Sprintf(msg, args...)
+        if isNoisyInfo(text) {
+                return
+        }
         l.print(cBlue, "i", msg, args...)
 }
 
@@ -54,6 +58,28 @@ func (l *prettyLog) print(color, sigil, msg string, args ...interface{}) {
                 cDim, mod, cReset,
                 fmt.Sprintf(msg, args...),
         )
+}
+
+func isNoisyInfo(text string) bool {
+        patterns := []string{
+                "Stored ",
+                "Uploading ",
+                "Updating contact store",
+                "push names from history sync",
+                "history sync",
+                "prekeys to server",
+                "message secret keys",
+                "Got 515 code",
+                "Sending presence",
+                "AppStateSyncComplete",
+                "Successfully sent",
+        }
+        for _, p := range patterns {
+                if strings.Contains(text, p) {
+                        return true
+                }
+        }
+        return false
 }
 
 func isNoisy(text string) bool {

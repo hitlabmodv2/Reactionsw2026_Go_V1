@@ -2,7 +2,6 @@ package conn
 
 import (
         "context"
-        "errors"
         "hisoka/src/handlers"
         "hisoka/src/helpers"
         "os"
@@ -29,26 +28,9 @@ type Template struct {
         Status bool
 }
 
-var (
-        errInvalidLen  = errors.New("kode harus tepat 8 karakter")
-        errInvalidChar = errors.New("kode hanya boleh berisi 1-9 dan A-Z tanpa 0, I, O, U")
-)
-
 func init() {
         store.DeviceProps.PlatformType = waCompanionReg.DeviceProps_EDGE.Enum()
         store.DeviceProps.Os = proto.String("Linux")
-}
-
-func validatePairingCode(code string) error {
-        if len(code) != 8 {
-                return errInvalidLen
-        }
-        for i := 0; i < len(code); i++ {
-                if !strings.ContainsRune(whatsmeow.LinkingCodeAlphabet, rune(code[i])) {
-                        return errInvalidChar
-                }
-        }
-        return nil
 }
 
 func StartClient() {
@@ -76,16 +58,6 @@ func StartClient() {
                         pairingNumber = regexp.MustCompile(`\D+`).ReplaceAllString(pairingNumber, "")
                         handler.PairingNumber = pairingNumber
 
-                        customCode := strings.ToUpper(strings.ReplaceAll(os.Getenv("CUSTOM_PAIRING_CODE"), "-", ""))
-                        if customCode != "" {
-                                if err := validatePairingCode(customCode); err != nil {
-                                        helpers.SocketDown("CUSTOM_PAIRING_CODE invalid: " + err.Error() + " — pakai kode random.")
-                                } else {
-                                        handler.CustomPairingCode = customCode
-                                        whatsmeow.CustomLinkingCode = customCode
-                                }
-                        }
-
                         if err := conn.Connect(); err != nil {
                                 panic(err)
                         }
@@ -93,9 +65,6 @@ func StartClient() {
                         var code string
                         for attempt := 1; ; attempt++ {
                                 var err error
-                                if customCode != "" {
-                                        whatsmeow.CustomLinkingCode = customCode
-                                }
                                 code, err = conn.PairPhone(context.Background(), pairingNumber, true, whatsmeow.PairClientChrome, "Edge (Linux)")
                                 if err == nil {
                                         break
