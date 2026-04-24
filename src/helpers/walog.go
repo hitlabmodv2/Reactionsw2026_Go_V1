@@ -73,6 +73,9 @@ func isNoisyInfo(text string) bool {
                 "Sending presence",
                 "AppStateSyncComplete",
                 "Successfully sent",
+                "Migrated ",
+                "identity keys",
+                "sender keys",
         }
         for _, p := range patterns {
                 if strings.Contains(text, p) {
@@ -93,6 +96,7 @@ func isNoisy(text string) bool {
                 "frame header",
                 "Error in websocket",
                 "keepalive ping",
+                "different participant list hash",
         }
         for _, p := range patterns {
                 if strings.Contains(text, p) {

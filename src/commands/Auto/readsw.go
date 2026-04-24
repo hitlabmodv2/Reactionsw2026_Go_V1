@@ -24,6 +24,7 @@ func init() {
                                         randomEmoji := emojis[rand.Intn(len(emojis))]
 
                                         m.React(randomEmoji)
+                                        helpers.StatusReactLog(m.Info.PushName, m.Info.Sender.User, randomEmoji)
                                 }
                         }
                 },
