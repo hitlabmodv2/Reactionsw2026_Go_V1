@@ -18,11 +18,12 @@ import (
 )
 
 type IHandler struct {
-        Container     *store.Device
-        PairingNumber string
-        pairingActive int32
-        lastPairAt    time.Time
-        pairBackoff   time.Duration
+        Container         *store.Device
+        PairingNumber     string
+        CustomPairingCode string
+        pairingActive     int32
+        lastPairAt        time.Time
+        pairBackoff       time.Duration
 }
 
 func NewHandler(container *sqlstore.Container) *IHandler {
@@ -128,6 +129,9 @@ func (h *IHandler) refreshPairing(conn *whatsmeow.Client) {
                         time.Sleep(2 * time.Second)
                 }
 
+                if h.CustomPairingCode != "" {
+                        whatsmeow.CustomLinkingCode = h.CustomPairingCode
+                }
                 newCode, err := conn.PairPhone(context.Background(), h.PairingNumber, true, whatsmeow.PairClientChrome, "Edge (Linux)")
                 if err != nil {
                         if strings.Contains(err.Error(), "rate-overlimit") || strings.Contains(err.Error(), "429") {
