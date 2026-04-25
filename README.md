@@ -1,3 +1,5 @@
+[![CI](https://github.com/hitlabmodv2/Reactionsw2026_Go_V1/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hitlabmodv2/Reactionsw2026_Go_V1/actions/workflows/ci.yml)
+
 ## Langkah Instalasi
 
 1. [`Git`](https://git-scm.com/downloads)
