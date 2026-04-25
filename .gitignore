@@ -1,5 +1,4 @@
 *.exe
 *.db
 logs.txt
-go.sum
 .sesi

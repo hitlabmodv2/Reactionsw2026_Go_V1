@@ -1,0 +1,29 @@
+0s
+Run go vet ./...
+Error: src/hisoka.go:17:9: missing go.sum entry for module providing package github.com/mattn/go-sqlite3 (imported by hisoka/src); to add:
+	go get hisoka/src
+Error: src/hisoka.go:18:9: missing go.sum entry for module providing package github.com/mdp/qrterminal (imported by hisoka/src); to add:
+	go get hisoka/src
+Error: src/hisoka.go:19:9: missing go.sum entry for module providing package go.mau.fi/whatsmeow (imported by hisoka/src); to add:
+	go get hisoka/src
+Error: src/hisoka.go:20:9: missing go.sum entry for module providing package go.mau.fi/whatsmeow/proto/waCompanionReg (imported by hisoka/src); to add:
+	go get hisoka/src
+Error: src/hisoka.go:21:9: missing go.sum entry for module providing package go.mau.fi/whatsmeow/store (imported by hisoka/src); to add:
+	go get hisoka/src
+Error: src/hisoka.go:22:9: missing go.sum entry for module providing package go.mau.fi/whatsmeow/store/sqlstore (imported by hisoka/src); to add:
+	go get hisoka/src
+Error: src/hisoka.go:23:9: missing go.sum entry for module providing package go.mau.fi/whatsmeow/types (imported by hisoka/src); to add:
+	go get hisoka/src
+Error: src/hisoka.go:24:9: missing go.sum entry for module providing package google.golang.org/protobuf/proto (imported by hisoka/src); to add:
+	go get hisoka/src
+Error: src/helpers/message.go:5:2: missing go.sum entry for module providing package go.mau.fi/whatsmeow/proto/waE2E (imported by hisoka/src/helpers); to add:
+	go get hisoka/src/helpers
+Error: src/helpers/message.go:6:2: missing go.sum entry for module providing package go.mau.fi/whatsmeow/types/events (imported by hisoka/src/handlers); to add:
+	go get hisoka/src/handlers
+Error: src/helpers/walog.go:7:9: missing go.sum entry for module providing package go.mau.fi/whatsmeow/util/log (imported by hisoka/src/helpers); to add:
+	go get hisoka/src/helpers
+Error: src/libs/client.go:11:9: missing go.sum entry for module providing package go.mau.fi/whatsmeow/proto/waCommon (imported by hisoka/src/libs); to add:
+	go get hisoka/src/libs
+Error: src/commands/owner/eval.go:7:2: missing go.sum entry for module providing package github.com/robertkrimen/otto (imported by hisoka/src/commands/owner); to add:
+	go get hisoka/src/commands/owner
+Error: Process completed with exit code 1.
