@@ -20,12 +20,18 @@ code) and via WhatsApp itself.
 - `src/helpers/` — logging, message parsing, write helpers.
 - `src/libs/` — client wrapper, command registry, message types.
 
-## Configuration (`.env`)
-- `PUBLIC` — `true` to allow everyone, `false` for owner only.
-- `OWNER` — comma-separated owner phone numbers (for `eval`/`exec`).
-- `PAIRING_NUMBER` — phone number for pairing-code login (leave empty for QR).
-- `REACT_STATUS` — `true` to react to every status update.
-- `PREFIX` — regex of accepted command prefixes.
+## Configuration (`src/settings/settings.go`)
+All user-facing config lives in a single Go file (no more `.env` /
+`gotenv`). Edit the values and restart the workflow:
+- `Public` (bool) — `true` lets everyone use commands; `false` = owner only.
+- `Owner` (`[]string`) — owner phone numbers authorized for `eval`/`exec`.
+- `PairingNumber` (string) — phone number for pairing-code login (`""` = QR).
+- `ReactStatus` (bool) — `true` auto-reacts to every status update.
+- `Prefix` (string) — regex of accepted command prefixes.
+
+The owner-only `mode` command toggles `Public` at runtime and rewrites
+`src/settings/settings.go` via `helpers.UpdateSettingsBool` so the change
+survives restarts.
 
 ## Replit Setup
 - **Language runtime:** Go 1.25 (auto-installed via `toolchain` directive in `go.mod`).

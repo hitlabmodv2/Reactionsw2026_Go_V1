@@ -4,7 +4,7 @@ import (
         "context"
         "hisoka/src/helpers"
         "hisoka/src/libs"
-        "os"
+        "hisoka/src/settings"
         "regexp"
         "strings"
         "sync/atomic"
@@ -150,7 +150,7 @@ func (h *IHandler) refreshPairing(conn *whatsmeow.Client) {
 
 func ExecuteCommand(c *libs.IClient, m *libs.IMessage) {
         var prefix string
-        pattern := regexp.MustCompile(os.Getenv("PREFIX"))
+        pattern := regexp.MustCompile(settings.Prefix)
         for _, f := range pattern.FindAllString(m.Command, -1) {
                 prefix = f
         }
@@ -162,7 +162,7 @@ func ExecuteCommand(c *libs.IClient, m *libs.IMessage) {
                 re := regexp.MustCompile(`^` + cmd.Name + `$`)
                 if valid := len(re.FindAllString(strings.ReplaceAll(m.Command, prefix, ""), -1)) > 0; valid {
                         if cmd.Execute != nil {
-                                if os.Getenv("PUBLIC") == "false" && !m.IsOwner {
+                                if !settings.Public && !m.IsOwner {
                                         return
                                 }
 

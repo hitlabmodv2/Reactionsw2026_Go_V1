@@ -4,6 +4,7 @@ import (
         "context"
         "hisoka/src/handlers"
         "hisoka/src/helpers"
+        "hisoka/src/settings"
         "os"
         "os/signal"
         "regexp"
@@ -52,7 +53,7 @@ func StartClient() {
 
         if conn.Store.ID == nil {
                 // No ID stored, new login
-                pairingNumber := os.Getenv("PAIRING_NUMBER")
+                pairingNumber := settings.PairingNumber
 
                 if pairingNumber != "" {
                         pairingNumber = regexp.MustCompile(`\D+`).ReplaceAllString(pairingNumber, "")

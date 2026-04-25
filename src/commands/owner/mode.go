@@ -3,7 +3,7 @@ package commands
 import (
 	"hisoka/src/helpers"
 	"hisoka/src/libs"
-	"os"
+	"hisoka/src/settings"
 )
 
 func init() {
@@ -14,25 +14,21 @@ func init() {
 		IsPrefix: true,
 		IsOwner:  true,
 		Execute: func(conn *libs.IClient, m *libs.IMessage) bool {
-			mode := os.Getenv("PUBLIC")
+			newValue := !settings.Public
 
-			if mode == "false" {
-				mode = "true"
+			if newValue {
 				m.Reply("The bot is now in public mode.")
-			} else if mode == "true" {
-				mode = "false"
-				m.Reply("The bot is now in private mode.")
 			} else {
-				mode = "false"
 				m.Reply("The bot is now in private mode.")
 			}
 
-			os.Setenv("PUBLIC", mode)
+			// Update the in-memory value so the change takes effect
+			// immediately for the running process…
+			settings.Public = newValue
 
-			// Update the .env file
-			err := helpers.UpdateEnvFile("PUBLIC", mode)
-			if err != nil {
-				m.Reply("Failed to update .env file: " + err.Error())
+			// …and persist it to settings.go so it survives a restart.
+			if err := helpers.UpdateSettingsBool("Public", newValue); err != nil {
+				m.Reply("Failed to update settings file: " + err.Error())
 				return false
 			}
 

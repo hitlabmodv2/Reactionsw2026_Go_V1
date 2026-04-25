@@ -1,7 +1,7 @@
 package libs
 
 import (
-	"os"
+	"hisoka/src/settings"
 	"regexp"
 	"strings"
 )
@@ -18,7 +18,7 @@ func GetList() []ICommand {
 
 func HasCommand(name string) bool {
 	var prefix string
-	pattern := regexp.MustCompile(os.Getenv("PREFIX"))
+	pattern := regexp.MustCompile(settings.Prefix)
 	for _, f := range pattern.FindAllString(name, -1) {
 		prefix = f
 	}
