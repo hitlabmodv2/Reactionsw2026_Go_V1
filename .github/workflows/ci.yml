@@ -41,3 +41,28 @@ jobs:
         env:
           CGO_ENABLED: "1"
         run: go build -v ./...
+
+  build-windows:
+    # Mirrors the Linux build job above so that any change which
+    # accidentally breaks the Windows toolchain (CGO/sqlite3, path
+    # handling, etc.) is caught early — *before* a release tag is cut.
+    name: Build (Windows)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download modules
+        run: go mod download
+
+      - name: go build
+        env:
+          CGO_ENABLED: "1"
+        run: go build -v ./...
