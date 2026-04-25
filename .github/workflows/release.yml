@@ -90,6 +90,19 @@ jobs:
           chmod +x release/hisoka-linux-amd64
           ls -la release/
 
+      - name: Generate SHA-256 checksums
+        run: |
+          set -euo pipefail
+          cd release
+          # Per-file checksum (handy for `sha256sum -c hisoka-linux-amd64.sha256`)
+          for f in hisoka-linux-amd64 hisoka-windows-amd64.exe; do
+            sha256sum "$f" > "${f}.sha256"
+          done
+          # Combined manifest (handy for `sha256sum -c checksums.txt`)
+          sha256sum hisoka-linux-amd64 hisoka-windows-amd64.exe > checksums.txt
+          echo "--- checksums ---"
+          cat checksums.txt
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
